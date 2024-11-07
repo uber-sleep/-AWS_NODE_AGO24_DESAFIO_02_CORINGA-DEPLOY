@@ -1,0 +1,21 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const customers_controllers_1 = __importDefault(require("../controllers/customers.controllers"));
+const CreateCustomerService_1 = __importDefault(require("../services/CreateCustomerService"));
+const UpdateCustomerService_1 = __importDefault(require("../services/UpdateCustomerService"));
+const DeleteCustomerService_1 = __importDefault(require("../services/DeleteCustomerService"));
+const customerRouter = (0, express_1.Router)();
+const customerController = new customers_controllers_1.default();
+const createCustomersService = new CreateCustomerService_1.default();
+const updateCustomersService = new UpdateCustomerService_1.default();
+const deleteCustomersService = new DeleteCustomerService_1.default();
+customerRouter.post('/', createCustomersService.validateCustomer, customerController.create);
+customerRouter.get('/:id', customerController.readById);
+customerRouter.get('/', customerController.read);
+customerRouter.patch('/:id', updateCustomersService.validateCustomerUpdate, customerController.update);
+customerRouter.delete('/:id', deleteCustomersService.validateCustomerDelete, customerController.delete);
+exports.default = customerRouter;

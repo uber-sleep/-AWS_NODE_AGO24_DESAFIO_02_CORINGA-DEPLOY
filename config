@@ -1,0 +1,7 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = true
+[remote "deploy"]
+	url = ssh://ubuntu@18.221.242.208:/home/ubuntu/AWS_NODE_AGO24_DEPLOY.git
+	fetch = +refs/heads/*:refs/remotes/deploy/*
