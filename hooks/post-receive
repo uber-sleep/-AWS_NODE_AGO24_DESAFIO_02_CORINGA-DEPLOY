@@ -1,7 +1,0 @@
-#!/bin/bash
-APP_DIR=/ubuntu/home/AWS_NODE_AGO24_DESAFIO_02_CORINGA_DEPLOY
-
-git --work-tree="$APP_DIR" --git-dir=~/AWS_NODE_AGO24_DEPLOY.git checkout -f
-cd "$APP_DIR"
-npm install
-pm2 reload all || pm2 start index.js --name aws-app
