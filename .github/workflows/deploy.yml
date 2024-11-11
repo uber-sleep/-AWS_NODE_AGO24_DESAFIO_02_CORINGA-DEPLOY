@@ -1,1 +1,48 @@
 name: deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts'
+
+      - run: npm install
+      - run: npm run build
+
+  deploy:
+    needs: build  
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts'
+
+      - name: Deploy to server
+        run: |
+          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} ubuntu@ec2-18-221-242-208.us-east-2.compute.amazonaws.com << 'EOF'
+            cd AWS_NODE_AGO24_DESAFIO_02_CORINGA_DEPLOY
+            git pull origin master
+            npm install
+            npm run build
+            pm2 restart api  
+          EOF
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
