@@ -1,4 +1,4 @@
-name: deploy
+name: Build and Deploy Application
 
 on:
   push:
@@ -6,49 +6,68 @@ on:
       - master
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout the code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
-
-      - run: npm install
-      - run: npm run build
-
-  deploy:
-    needs: build  
-    runs-on: ubuntu-latest
-    environment:
-      name: production
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20.x'
-
-      - name: Deploy to server
+      - name: Set up SSH key for deployment
         run: |
+<<<<<<< Updated upstream
           ssh -i ${{ secrets.SSH_PRIVATE_KEY }} ubuntu@ec2-18-221-242-208.us-east-2.compute.amazonaws.com << 'EOF'
             # Verifica o diretório correto
             cd /home/ubuntu/AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY
             # Verifica o status do repositório
+=======
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+
+      - name: Clone the repository to the deployment server
+        run: |
+          # Defina o diretório de destino para o repositório
+          TARGET_DIR="/home/ubuntu/AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY"
+          # Verifique se o diretório existe
+          if [ ! -d "$TARGET_DIR" ]; then
+            echo "Diretório não encontrado. Clonando o repositório..."
+            git clone https://github.com/uber-sleep/-AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY.git $TARGET_DIR
+          else
+            echo "Diretório já existe. Atualizando o repositório..."
+            cd $TARGET_DIR
+>>>>>>> Stashed changes
             git pull origin master
-            # Verifica se o package.json está presente
-            ls /home/ubuntu/AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY/package.json
-            # Instala dependências e executa o build
+          fi
+
+      - name: Install dependencies
+        run: |
+          cd $TARGET_DIR
+          if [ -f "package.json" ]; then
             npm install
+<<<<<<< Updated upstream
             npm run build
             # Reinicia o processo com PM2
             pm2 restart
           EOF
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+=======
+          else
+            echo "Erro: package.json não encontrado."
+            exit 1
+          fi
+
+      - name: Build the application
+        run: |
+          cd $TARGET_DIR
+          npm run build
+
+      - name: Deploy the application
+        run: |
+          cd $TARGET_DIR
+          # Comando de deploy específico (substitua pelo comando real)
+          pm2 restart
+
+      - name: Clean up SSH key
+        run: rm -f private_key.pem
+
+>>>>>>> Stashed changes
