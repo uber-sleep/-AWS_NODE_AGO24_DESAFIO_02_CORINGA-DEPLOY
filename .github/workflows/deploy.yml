@@ -20,6 +20,8 @@ jobs:
       - name: Clone or update repository on the server
         run: |
           TARGET_DIR="/home/ubuntu/AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY"
+          sudo mkdir -p $TARGET_DIR        # Garantir que o diretório exista
+          sudo chown -R $USER:$USER $TARGET_DIR  # Garantir que o usuário tenha permissão
           if [ ! -d "$TARGET_DIR" ]; then
             git clone https://github.com/uber-sleep/-AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY.git $TARGET_DIR
           else
