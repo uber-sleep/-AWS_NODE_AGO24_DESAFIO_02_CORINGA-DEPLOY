@@ -3,33 +3,28 @@ name: Build and Deploy Application
 on:
   push:
     branches:
-      - master # ou o nome da sua branch de produção
-
+      - master 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2 # Faz o checkout do código da branch atual
+        uses: actions/checkout@v3
 
       - name: SSH and run commands
         env:
-          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # Chave SSH do repositório secreto
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }} 
         run: |
-          echo "$PRIVATE_KEY" > private_key.pem # Escreve a chave privada em um arquivo
-          chmod 600 private_key.pem # Dá permissões apropriadas à chave privada
+          echo "$PRIVATE_KEY" > private_key.pem 
+          chmod 600 private_key.pem 
 
-          # Conecta via SSH e executa os comandos no servidor remoto
-          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@your-server-ip <<EOF
-            # Diretório de destino já existe
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@ec2-18-221-242-208.us-east-2.compute.amazonaws.com <<EOF
             TARGET_DIR="/home/ubuntu/AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY"
             cd $TARGET_DIR
 
-            # Faz o pull do repositório para garantir que está atualizado
             git pull origin master
 
-            # Instala as dependências, caso necessário
             if [ -f "package.json" ]; then
               npm install
             else
@@ -37,12 +32,10 @@ jobs:
               exit 1
             fi
 
-            # Faz o build da aplicação
             npm run build
 
-            # Reinicia o processo ou serviço com PM2 (ou outro sistema de gerenciamento de processos)
-            pm2 restart app || pm2 start app.js --name app # Ajuste conforme necessário
+            pm2 restart app || pm2 start /home/ubuntu/AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY --name app
 
           EOF
 
-          rm -f private_key.pem # Remove a chave privada após o uso
+          rm -f private_key.pem 
