@@ -1,30 +1,36 @@
 name: Build and Deploy Application
 
+# Trigger this workflow on pushes to the specified branch
 on:
   push:
     branches:
-      - master
+      - master  # Replace with your branch name if different
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
+  deploy:
+    runs-on: ubuntu-latest  # Run this job on the latest Ubuntu version
+
     steps:
-      - name: Checkout the code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3  # Check out the repository code
 
       - name: Set up SSH key for deployment
+        env:
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Reference the private key stored in GitHub Secrets
         run: |
-          echo "$SSH_PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
+          echo "$PRIVATE_KEY" > private_key.pem  # Write the private key to a file
+          chmod 600 private_key.pem  # Set the appropriate permissions for the key file
 
       - name: Clone or update repository on the server
         run: |
           TARGET_DIR="/home/ubuntu/AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY"
-          sudo mkdir -p $TARGET_DIR        # Garantir que o diretório exista
-          sudo chown -R $USER:$USER $TARGET_DIR  # Garantir que o usuário tenha permissão
+          
+          # Verifica se o diretório existe e, se não, clona o repositório
           if [ ! -d "$TARGET_DIR" ]; then
+            echo "Diretório não encontrado. Clonando o repositório..."
             git clone https://github.com/uber-sleep/-AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY.git $TARGET_DIR
           else
+            echo "Diretório já existe. Atualizando o repositório..."
             cd $TARGET_DIR
             git pull origin master
           fi
@@ -45,4 +51,9 @@ jobs:
           pm2 restart app || pm2 start app
 
       - name: Clean up SSH key
-        run: rm -f private_key.pem
+        run: rm -f private_key.pem  # Remove the private key file after use for security
+
+    permissions:
+      contents: read  # Read access to repository contents
+      actions: write  # Permission to perform actions like deployments
+      id-token: write  # Optional: grant id-token write access if needed
