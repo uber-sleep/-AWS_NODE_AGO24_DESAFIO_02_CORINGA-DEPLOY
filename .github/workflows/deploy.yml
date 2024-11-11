@@ -1,59 +1,48 @@
 name: Build and Deploy Application
 
-# Trigger this workflow on pushes to the specified branch
 on:
   push:
     branches:
-      - master  # Replace with your branch name if different
+      - master # ou o nome da sua branch de produção
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # Run this job on the latest Ubuntu version
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3  # Check out the repository code
+        uses: actions/checkout@v2 # Faz o checkout do código da branch atual
 
-      - name: Set up SSH key for deployment
+      - name: SSH and run commands
         env:
-          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Reference the private key stored in GitHub Secrets
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }} # Chave SSH do repositório secreto
         run: |
-          echo "$PRIVATE_KEY" > private_key.pem  # Write the private key to a file
-          chmod 600 private_key.pem  # Set the appropriate permissions for the key file
+          echo "$PRIVATE_KEY" > private_key.pem # Escreve a chave privada em um arquivo
+          chmod 600 private_key.pem # Dá permissões apropriadas à chave privada
 
-      - name: Clone or update repository on the server
-        run: |
-          TARGET_DIR="/home/ubuntu/AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY"
-          
-          # Verifica se o diretório existe e, se não, clona o repositório
-          if [ ! -d "$TARGET_DIR" ]; then
-            echo "Diretório não encontrado. Clonando o repositório..."
-            git clone https://github.com/uber-sleep/-AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY.git $TARGET_DIR
-          else
-            echo "Diretório já existe. Atualizando o repositório..."
+          # Conecta via SSH e executa os comandos no servidor remoto
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@your-server-ip <<EOF
+            # Diretório de destino já existe
+            TARGET_DIR="/home/ubuntu/AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY"
             cd $TARGET_DIR
+
+            # Faz o pull do repositório para garantir que está atualizado
             git pull origin master
-          fi
 
-      - name: Install dependencies
-        run: |
-          cd $TARGET_DIR
-          npm install --legacy-peer-deps
+            # Instala as dependências, caso necessário
+            if [ -f "package.json" ]; then
+              npm install
+            else
+              echo "Erro: package.json não encontrado."
+              exit 1
+            fi
 
-      - name: Build the application
-        run: |
-          cd $TARGET_DIR
-          npm run build
+            # Faz o build da aplicação
+            npm run build
 
-      - name: Deploy the application
-        run: |
-          cd $TARGET_DIR
-          pm2 restart app || pm2 start app
+            # Reinicia o processo ou serviço com PM2 (ou outro sistema de gerenciamento de processos)
+            pm2 restart app || pm2 start app.js --name app # Ajuste conforme necessário
 
-      - name: Clean up SSH key
-        run: rm -f private_key.pem  # Remove the private key file after use for security
+          EOF
 
-    permissions:
-      contents: read  # Read access to repository contents
-      actions: write  # Permission to perform actions like deployments
-      id-token: write  # Optional: grant id-token write access if needed
+          rm -f private_key.pem # Remove a chave privada após o uso
