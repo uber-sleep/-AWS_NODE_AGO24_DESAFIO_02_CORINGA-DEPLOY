@@ -4,13 +4,13 @@ info:
   description: |-
     API para o gerenciamento da locação de carros. Permite o gerenciamento de usuários, o cadastro de clientes, o controle de carros disponíveis para locação e a criação e acompanhamento de pedidos de locação.
   contact:
-    email: apiteam@swagger.io
+    email: goncalves.macarolina@gmail.com
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   version: 1.0.11
 servers:
-  - url: https://petstore3.swagger.io/api/v3
+  - url: https://18.221.242.208
 tags:
   - name: users
     description: Gerenciamento das informações sobre usuários do sistema
