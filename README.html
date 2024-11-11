@@ -1,116 +1,246 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Deploy API Node.js em um servidor EC2 AWS</title>
-    <style>
-        body {
-            margin: 2rem;
-            font-family: sans-serif;
-            line-height: 1.8rem;
-            color: black;
-        }
-    </style>
-</head>
-<body>
-    <h2 id="deploy-de-api-node-js-em-um-servidor-ec2-aws">Deploy de API Node.js em um servidor EC2 AWS</h2>
-    <p>O passo a passo a seguir detalha a criação de uma instancia EC2 e as demais configurações para fazer o deploy da API
-        CompassCar com sucesso.</p>
-    <h3 id="1-configura-o-inicial-do-servidor">1. Configuração Inicial do Servidor</h3>
-    <h4 id="1-1-criar-uma-inst-ncia-ec2-no-aws">1.1. Criar uma Instância EC2 no AWS</h4>
-    <ol>
-        <li>No painel da AWS, selecione o serviço EC2 e crie uma nova instância.</li>
-        <li>Escolha a Amazon Machine Image (AMI) Ubuntu Server 22.04 LTS.</li>
-        <li>Defina o tipo de instância, usei uma t2.small mas a opção t2.micro do free tier pode ser suficiente, apesar de
-            ter menos recursos.</li>
-        <li>Configure as regras de segurança:<ul>
-                <li>Porta 22 para SSH</li>
-                <li>Porta 80 para HTTP </li>
-                <li>Porta 443 para HTTPS </li>
-                <li>Porta 300 para o servidor </li>
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Document</title>
+      <style>
+         body {
+         font-family: Arial, sans-serif;
+         line-height: 1.6;
+         margin: 20px;
+         color: #333;
+         }
+         h1,
+         h2,
+         h3,
+         h4 {
+         color: #2c3e50;
+         }
+         h1 {
+         border-bottom: 2px solid #2c3e50;
+         padding-bottom: 5px;
+         }
+         h2,
+         h3 {
+         border-left: 4px solid #2c3e50;
+         padding-left: 8px;
+         margin-top: 20px;
+         }
+         p {
+         margin: 10px 0;
+         }
+         ul,
+         ol {
+         margin-left: 20px;
+         padding-left: 10px;
+         }
+         li {
+         margin-bottom: 8px;
+         }
+         code {
+         background-color: #f4f4f4;
+         padding: 2px 4px;
+         border-radius: 4px;
+         color: #e67e22;
+         font-family: monospace;
+         }
+      </style>
+   </head>
+   <body>
+      <h1>Desafio 03 - AWS NODE.JS</h1>
+      <ol>
+         <li>Deploy de API Node.js em um servidor EC2 AWS</li>
+         <li>Configurar o S3 para Armazenamento de Arquivos</li>
+         <li>API em produção</li>
+      </ol>
+      <h2>Deploy de API Node.js em um servidor EC2 AWS</h2>
+      <p>O passo a passo a seguir detalha a criação de uma instancia EC2 e as demais configurações para fazer o deploy da API CompassCar com sucesso.</p>
+      <h3>1. Configuração Inicial do Servidor</h3>
+      <h4>1.1. Criar uma Instância EC2 no AWS</h4>
+      <ol>
+         <li>No painel da AWS, selecione o serviço EC2 e crie uma nova instância.</li>
+         <li>Escolha a Amazon Machine Image (AMI) Ubuntu Server 22.04 LTS.</li>
+         <li>Defina o tipo de instância, usei uma t2.small mas a opção t2.micro do free tier pode ser suficiente,
+            apesar de ter menos recursos.
+         </li>
+         <li>
+            Configure as regras de segurança:
+            <ul>
+               <li>Porta 22 para SSH</li>
+               <li>Porta 80 para HTTP </li>
+               <li>Porta 443 para HTTPS </li>
+               <li>Porta 300 para o servidor </li>
             </ul>
-        </li>
-        <li>Finalize a criação da instância e baixe a chave privada .pem para acessar o servidor via SSH.<h4
-                id="1-2-acessar-a-inst-ncia-via-ssh">1.2. Acessar a Instância via SSH</h4>
-            Execute o comando abaixo para se conectar à instância, substituindo chave.pem e ip-instancia pelos seus valores.
-            <pre><code class="lang-bash"><span class="hljs-selector-tag">ssh</span> <span class="hljs-selector-tag">-i</span> "<span class="hljs-selector-tag">chave</span><span class="hljs-selector-class">.pem</span>" <span class="hljs-selector-tag">ubuntu</span>@<span class="hljs-keyword">ip</span>-<span class="hljs-keyword">instancia</span>
-    </code></pre>
-            <h3 id="2-instalar-depend-ncias-no-servidor">2. Instalar Dependências no Servidor</h3>
-            <h4 id="2-1-instalar-node-js-e-npm">2.1. Instalar Node.js e NPM</h4>
-            Atualize os pacotes do Ubuntu:
-            <pre><code class="lang-bash">sudo apt <span class="hljs-keyword">update</span>
-    sudo apt <span class="hljs-keyword">upgrade</span> -y
-    </code></pre>
-            Instale o Node.js:
-            <pre><code class="lang-bash">curl -fsSL http<span class="hljs-variable">s:</span>//<span class="hljs-keyword">deb</span>.nodesource.<span class="hljs-keyword">com</span>/setup_lts.<span class="hljs-keyword">x</span> | sudo -E bash -
-    sudo apt install -<span class="hljs-keyword">y</span> nodejs
-    </code></pre>
-            Verifique se o Node.js e o NPM foram instalados corretamente:
-            <pre><code class="lang-bash"><span class="hljs-keyword">node</span> <span class="hljs-title">-v</span>
-    npm -v
-    </code></pre>
-            <h4 id="2-2-instalar-e-configurar-o-mysql">2.2. Instalar e Configurar o MySQL</h4>
-            Instale o MySQL:
-            <pre><code class="lang-bash">sudo apt <span class="hljs-keyword">install</span> mysql-<span class="hljs-keyword">server</span> -y
-    </code></pre>
-            Acesse o MySQL para criar um usuário e um banco de dados específicos para a aplicação:
-            <pre><code class="lang-bash"><span class="hljs-attribute">sudo mysql -u root</span>
-    </code></pre>
-            Dentro do MySQL, execute os seguintes comandos para criar um banco de dados, um usuário e conceder permissões:
-            <pre><code class="lang-sql"><span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">DATABASE</span> nome_do_banco;
-    <span class="hljs-keyword">CREATE</span> <span class="hljs-keyword">USER</span> <span class="hljs-string">'seu_usuario'</span>@<span class="hljs-string">'localhost'</span> <span class="hljs-keyword">IDENTIFIED</span> <span class="hljs-keyword">BY</span> <span class="hljs-string">'sua_senha'</span>;
-    <span class="hljs-keyword">GRANT</span> ALL <span class="hljs-keyword">PRIVILEGES</span> <span class="hljs-keyword">ON</span> nome_do_banco.* <span class="hljs-keyword">TO</span> <span class="hljs-string">'seu_usuario'</span>@<span class="hljs-string">'localhost'</span>;
-    <span class="hljs-keyword">FLUSH</span> <span class="hljs-keyword">PRIVILEGES</span>;
-    EXIT;
-    </code></pre>
-            <h4 id="2-3-instalar-pm2">2.3. Instalar PM2</h4>
-            PM2 é um gerenciador de processos que mantem a aplicação Node.js em execução e faz restart automático em caso de
-            falhas.
-            <pre><code class="lang-bash">sudo npm <span class="hljs-keyword">install</span> -g pm2
-    </code></pre>
-            <h3 id="3-configurar-a-aplica-o-no-servidor">3. Configurar a Aplicação no Servidor</h3>
-            <h4 id="3-1-enviar-os-arquivos-da-aplica-o">3.1. Enviar os Arquivos da Aplicação</h4>
-            Para enviar arquivos para o servidor, você pode usar o SCP (Secure Copy Protocol) no terminal:
-            <pre><code class="lang-bash">scp -i <span class="hljs-string">"my-key.pem"</span> -r <span class="hljs-regexp">/caminho/</span>para<span class="hljs-regexp">/seu/</span>projeto ubuntu<span class="hljs-meta">@instance</span>-<span class="hljs-string">ip:</span><span class="hljs-regexp">/home/</span>ubuntu/
-    </code></pre>
-            Alternativamente, utilize o Git para clonar o projeto diretamente do repositório:
-            <pre><code class="lang-bash">git <span class="hljs-keyword">clone</span> <span class="hljs-title">https</span>://github.com/usuario/repositorio.git
-    </code></pre>
-            <h4 id="3-2-configurar-vari-veis-de-ambiente">3.2. Configurar Variáveis de Ambiente</h4>
-            Crie um arquivo .env na raiz do projeto, com as configurações de conexão com o banco de dados e outras variáveis
-            necessárias:
-            <pre><code class="lang-plaintext"><span class="hljs-attr">DB_HOST</span>=localhost
-    <span class="hljs-attr">DB_PORT</span>=<span class="hljs-number">3306</span>
-    <span class="hljs-attr">DB_USER</span>=nome_usuario
-    <span class="hljs-attr">DB_PASS</span>=senha_segura
-    <span class="hljs-attr">DB_NAME</span>=nome_do_banco
-    <span class="hljs-attr">PORT</span>=<span class="hljs-number">3000</span>
-    </code></pre>
-            <h4 id="3-3-instalar-as-depend-ncias-do-projeto">3.3. Instalar as Dependências do Projeto</h4>
-            Navegue até o diretório do projeto e instale as dependências:
-            <pre><code class="lang-bash">cd <span class="hljs-regexp">/caminho/</span>para<span class="hljs-regexp">/seu/</span>projeto
-    npm install
-    </code></pre>
-            <h3 id="4-executar-as-migra-es-e-configurar-banco-de-dados">4. Executar as Migrações e Configurar Banco de Dados
-            </h3>
-            Se a aplicação usa TypeORM ou outro ORM, execute as migrações para criar as tabelas no banco de dados:
-            <pre><code class="lang-bash">npx typeorm migration:<span class="hljs-keyword">run</span><span class="bash"> <span class="hljs-_">-d</span> src/db/data-source.ts</span>
-    </code></pre>
-            <h3 id="5-iniciar-a-aplica-o-em-produ-o">5. Iniciar a Aplicação em Produção</h3>
-            Execute o comando para rodar a aplicação com PM2 e manter o serviço ativo:
-            <pre><code class="lang-bash">pm2 start dist/<span class="hljs-keyword">server</span>.js
-    </code></pre>
-            Verifique o status da aplicação:
-            <pre><code class="lang-bash">pm2 <span class="hljs-keyword">status</span>
-    </code></pre>
-            Para salvar a configuração do PM2 e garantir que a aplicação reinicie após uma reinicialização do servidor, use:
-            <pre><code class="lang-bash">p<span class="hljs-name">m2</span> startup
-    p<span class="hljs-name">m2</span> save
-    </code></pre>
-            <h3 id="6-p-s-deploy">6. Pós-Deploy</h3>
-            Acesse o DNS publico para confirmar que a aplicação está no ar.
-        </li>
-    </ol>
-</body>
+         </li>
+         <li>Finalize a criação da instância e baixe a chave privada .pem para acessar o servidor via SSH.</li>
+      </ol>
+      <h4>1.2. Acessar a Instância via SSH</h4>
+      <p>Execute o comando abaixo para se conectar à instância, substituindo chave.pem e ip-instancia pelos seus
+         valores.
+         <code>bash
+         ssh -i "chave.pem" ubuntu@ip-instancia
+         </code>
+      </p>
+      <h3>2. Instalar Dependências no Servidor</h3>
+      <h4>2.1. Instalar Node.js e NPM</h4>
+      <p>Atualize os pacotes do Ubuntu:
+         <code>bash
+         sudo apt update
+         sudo apt upgrade -y
+         </code>
+         Instale o Node.js:
+         <code>bash
+         curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+         sudo apt install -y nodejs
+         </code>
+         Verifique se o Node.js e o NPM foram instalados corretamente:
+         <code>bash
+         node -v
+         npm -v
+         </code>
+      </p>
+      <h4>2.2. Instalar e Configurar o MySQL</h4>
+      <p>Instale o MySQL:
+         <code>bash
+         sudo apt install mysql-server -y
+         </code>
+         Acesse o MySQL para criar um usuário e um banco de dados específicos para a aplicação:
+         <code>bash
+         sudo mysql -u root
+         </code>
+         Dentro do MySQL, execute os seguintes comandos para criar um banco de dados, um usuário e conceder
+         permissões:
+         <code>sql
+         CREATE DATABASE nome_do_banco;
+         CREATE USER 'seu_usuario'@'localhost' IDENTIFIED BY 'sua_senha';
+         GRANT ALL PRIVILEGES ON nome_do_banco.* TO 'seu_usuario'@'localhost';
+         FLUSH PRIVILEGES;
+         EXIT;
+         </code>
+      </p>
+      <h4>2.3. Instalar PM2</h4>
+      <p>PM2 é um gerenciador de processos que mantem a aplicação Node.js em execução e faz restart automático em caso
+         de falhas.
+         <code>bash
+         sudo npm install -g pm2
+         </code>
+      </p>
+      <h3>3. Configurar a Aplicação no Servidor</h3>
+      <h4>3.1. Enviar os Arquivos da Aplicação</h4>
+      <p>Para enviar arquivos para o servidor, você pode usar o SCP (Secure Copy Protocol) no terminal:
+         <code>bash
+         scp -i "my-key.pem" -r /caminho/para/seu/projeto ubuntu@instance-ip:/home/ubuntu/
+         </code>
+         Alternativamente, utilize o Git para clonar o projeto diretamente do repositório:
+         <code>bash
+         git clone https://github.com/usuario/repositorio.git
+         </code>
+      </p>
+      <h4>3.2. Configurar Variáveis de Ambiente</h4>
+      <p>Crie um arquivo .env na raiz do projeto, com as configurações de conexão com o banco de dados e outras
+         variáveis necessárias:
+         <code>plaintext
+         DB_HOST=localhost
+         DB_PORT=3306
+         DB_USER=nome_usuario
+         DB_PASS=senha_segura
+         DB_NAME=nome_do_banco
+         PORT=3000
+         </code>
+      </p>
+      <h4>3.3. Instalar as Dependências do Projeto</h4>
+      <p>Navegue até o diretório do projeto e instale as dependências:
+         <code>bash
+         cd /caminho/para/seu/projeto
+         npm install
+         </code>
+      </p>
+      <h3>4. Executar as Migrações e Configurar Banco de Dados</h3>
+      <p>Se a aplicação usa TypeORM ou outro ORM, execute as migrações para criar as tabelas no banco de dados:
+         <code>bash
+         npx typeorm migration:run -d src/db/data-source.ts
+         </code>
+      </p>
+      <h3>5. Iniciar a Aplicação em Produção</h3>
+      <p>Execute o comando para rodar a aplicação com PM2 e manter o serviço ativo:
+         <code>bash
+         pm2 start dist/server.js 
+         </code>
+         Verifique o status da aplicação:
+         <code>bash
+         pm2 status
+         </code>
+         Para salvar a configuração do PM2 e garantir que a aplicação reinicie após uma reinicialização do
+         servidor, use:
+         <code>bash
+         pm2 startup
+         pm2 save
+         </code>
+      </p>
+      <h3>6. Pós-Deploy</h3>
+      <p>Acesse o DNS publico para confirmar que a aplicação está no ar.</p>
+      <h2>Configurar o S3 para Armazenamento de Arquivos</h2>
+      <p>O Amazon S3 permite criar buckets configurados com segurança e gerenciamento detalhado de acessos. A seguir,
+         estão as etapas para criar e configurar um bucket S3 com as novas opções.
+      </p>
+      <h4>1. Criar o Bucket no S3</h4>
+      <ol>
+         <li>No <strong>AWS Console</strong>, vá até o serviço <strong>S3</strong>.</li>
+         <li>Clique em <strong>Create bucket</strong> para começar o processo.</li>
+         <li>Escolha um nome globalmente único para o bucket.</li>
+         <li>Selecione a <strong>região</strong> onde o bucket será armazenado.</li>
+      </ol>
+      <h4>2. Configurar <strong>Object Ownership</strong></h4>
+      <ul>
+         <li>Selecione <strong>ACLs disabled (recommended)</strong> para que todos os objetos no bucket sejam
+            propriedade da sua conta.
+         </li>
+         <li>Em <strong>Object Ownership</strong>, deixe a opção <strong>Bucket owner enforced</strong> marcada
+            para garantir que apenas sua conta seja proprietária dos objetos do bucket.
+         </li>
+      </ul>
+      <h4>3. Configurações de <strong>Block Public Access</strong></h4>
+      <p>A configuração de bloqueio de acesso público é recomendada para garantir a segurança e privacidade dos dados
+         armazenados, mas você pode alterar de acordo com sua necessidade.
+         - <strong>Block all public access</strong>: Essa opção bloquea todo o acesso público ao bucket e seus
+         objetos.
+         - Ao expandir você pode ver e selecionar apenas as subopções de bloqueio.
+      </p>
+      <h4>4. <strong>Bucket Versioning</strong></h4>
+      <p>A versionamento de objetos permite armazenar múltiplas versões do mesmo objeto.
+         - Para manter versões antigas de arquivos que podem ser recuperadas caso necessário, selecione
+         <strong>Enable</strong> em <strong>Bucket Versioning</strong>.
+         - Caso contrário, deixe a opção como <strong>Disable</strong>.
+      </p>
+      <h4>5. Adicionar <strong>Tags</strong> (Opcional)</h4>
+      <ul>
+         <li>Adicione tags se for necessário para organizar o bucket.</li>
+      </ul>
+      <h4>6. Configurar <strong>Default Encryption</strong></h4>
+      <p>O S3 oferece criptografia do lado do servidor para proteger automaticamente novos objetos carregados no
+         bucket. Escolha a que melhor atender suas necessidades.
+      </p>
+      <h4>7. Finalizar a Criação do Bucket</h4>
+      <p>Clique em <strong>Create bucket</strong> para finalizar. Agora, você poderá carregar arquivos e configurar
+         políticas adicionais de acesso.
+      </p>
+      <h2>API em produção</h2>
+      <h4>1. Acesso</h4>
+      <ol>
+         <li>Usando o Postman ou a ferramenta de testes de API de sua preferencia, faça uma requisição POST para
+            esta URL: 18.221.242.208/login
+         </li>
+         <li>Envie estes dados no corpo da requisição:
+            <code>json
+            "email": "teste@email.com",
+            "password": "122345"
+            </code>
+         </li>
+         <li>Copie o token JWT criado para acessar as demais rotas da API.</li>
+      </ol>
+      <h4>2. <a href="https://compasscar-files.s3.us-east-2.amazonaws.com/swagger.html">Documentação da API -
+         Swagger</a>
+      </h4>
+   </body>
 </html>
