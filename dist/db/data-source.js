@@ -22,7 +22,7 @@ const AppDataSource = new typeorm_1.DataSource({
     synchronize: false,
     logging: true,
     entities: [Customer_1.default, User_1.default, OrderEntity_1.default, Cars_1.default],
-    migrations: ['dist/db/migration/*.js'],
+    migrations: ['src/db/migration/*.ts'],
     subscribers: [],
 });
 exports.default = AppDataSource;

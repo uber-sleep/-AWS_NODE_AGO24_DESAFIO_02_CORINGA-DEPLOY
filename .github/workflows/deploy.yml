@@ -1,48 +1,45 @@
-name: deploy
+name: Build and Deploy Application
 
 on:
   push:
     branches:
-      - master
-
+      - master 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 'lts'
-
-      - run: npm install
-      - run: npm run build
-
   deploy:
-    needs: build  
     runs-on: ubuntu-latest
-    environment:
-      name: production
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 'lts'
-
-      - name: Deploy to server
-        run: |
-          ssh -i ${{ secrets.SSH_PRIVATE_KEY }} ubuntu@ec2-18-221-242-208.us-east-2.compute.amazonaws.com << 'EOF'
-            cd AWS_NODE_AGO24_DESAFIO_02_CORINGA_DEPLOY
-            git pull origin master
-            npm install
-            npm run build
-            pm2 restart api  
-          EOF
+      - name: SSH and run commands
         env:
+<<<<<<< HEAD
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+=======
+          PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }} 
+        run: |
+          echo "$PRIVATE_KEY" > private_key.pem 
+          chmod 600 private_key.pem 
+
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@ec2-18-221-242-208.us-east-2.compute.amazonaws.com <<EOF
+            TARGET_DIR="/home/ubuntu/AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY"
+            cd $TARGET_DIR
+
+            git pull origin master
+
+            if [ -f "package.json" ]; then
+              npm install
+            else
+              echo "Erro: package.json não encontrado."
+              exit 1
+            fi
+
+            npm run build
+
+            pm2 restart app || pm2 start /home/ubuntu/AWS_NODE_AGO24_DESAFIO_02_CORINGA-DEPLOY --name app
+
+          EOF
+
+          rm -f private_key.pem 
+>>>>>>> 525e3b795d8a32e6793f393638e12a7478657079
