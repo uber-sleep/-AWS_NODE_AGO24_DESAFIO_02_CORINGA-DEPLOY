@@ -37,7 +37,9 @@ jobs:
 
       - name: Deploy to server
         run: |
-          ssh -o StrictHostKeyChecking=no -i <(echo "$SSH_PRIVATE_KEY") ubuntu@ec2-18-221-242-208.us-east-2.compute.amazonaws.com << 'EOF'
+          echo "$SSH_PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
+          ssh -o StrictHostKeyChecking=no -i private_key.pem ubuntu@ec2-18-221-242-208.us-east-2.compute.amazonaws.com << 'EOF'
             cd AWS_NODE_AGO24_DESAFIO_02_CORINGA_DEPLOY
             git pull origin master
             npm install
